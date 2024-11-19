@@ -46,7 +46,9 @@ jobs:
       #       cache: 'pnpm'
 
       - name: Install deps
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install
 
       - name: Type Check
         run: pnpm ts
