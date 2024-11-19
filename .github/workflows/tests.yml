@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: uninen/node:22
-      options: --user duser
+    #   options: --user duser
 
     env:
       CI: 1
@@ -44,6 +44,9 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
 
       - name: Type Check
         run: pnpm ts
