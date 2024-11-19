@@ -1,5 +1,5 @@
 name: Tests
-# this should run w cache now
+# this should run w cache now 2
 on:
   push:
     branches:
@@ -55,6 +55,7 @@ jobs:
 
       - run: pnpm exec playwright install --with-deps
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+
       - run: pnpm exec playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
