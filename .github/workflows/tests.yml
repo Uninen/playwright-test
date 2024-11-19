@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: uninen/node:22
+      options: --user duser
 
     env:
       CI: 1
@@ -33,6 +34,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+
       - uses: pnpm/action-setup@v4.0.0
         with:
           version: 9
