@@ -62,10 +62,10 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Build
-        run: pnpm run vite build
+        run: pnpm vite build
 
       - name: Run e2e tests
-        run: pnpm run playwright test
+        run: pnpm playwright test
 
       - name: Coverage
         uses: davelosert/vitest-coverage-report-action@v2.8.0
