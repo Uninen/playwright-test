@@ -70,4 +70,4 @@ jobs:
 
       - name: Coverage
         uses: davelosert/vitest-coverage-report-action@v2.8.0
-        if: ${{ success() }}
+        if: ${{ matrix.browser == 'webkit' && success() }}
