@@ -18,9 +18,8 @@ jobs:
     #   image: uninen/node:22
     #   options: --user duser
 
-    # env:
-    #   CI: 1
-    #   PLAYWRIGHT_BROWSERS_PATH: 0
+    env:
+      PLAYWRIGHT_VERSION: ""
 
     steps:
       - uses: actions/checkout@v4.2.2
@@ -35,12 +34,26 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Setup Playwright
-        uses: ./.github/actions/cache-playwright
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').dependencies['@playwright/test'].version)")" >> $GITHUB_ENV
+
+      - name: Cache playwright binaries
+        uses: actions/cache@v4.1.2
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
+      - run: pnpm exec playwright install-deps
 
       - name: Install deps
         run: |
           pnpm install --frozen-lockfile
+
+      - run: pnpm exec playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
 
       - name: Type Check
         run: pnpm ts
