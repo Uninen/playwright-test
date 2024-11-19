@@ -40,6 +40,13 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
+      - uses: actions/cache@v4.1.2
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
@@ -49,13 +56,16 @@ jobs:
       - name: Run unit tests
         run: pnpm test:ci
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+      - run: pnpm exec playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: pnpm exec playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+
+      - name: Build
+        run: pnpm run vite build
 
       - name: Run e2e tests
-        run: |
-          pnpm build
-          pnpm test:ci-e2e
+        run: pnpm run playwright test
 
       - name: Coverage
         uses: davelosert/vitest-coverage-report-action@v2.8.0
