@@ -40,7 +40,7 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'mobile',
+      name: 'webkit',
       use: {
         browserName: 'webkit',
         ...devices['iPhone SE'],
