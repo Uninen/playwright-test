@@ -12,62 +12,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
+  setup:
     runs-on: ubuntu-latest
-    # container:
-    #   image: uninen/node:22
-    #   options: --user duser
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.0.0
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
 
-    env:
-      PLAYWRIGHT_VERSION: ""
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Cache browsers
+        uses: actions/cache/save@v4.1.2
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+  tests:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: [mobile, firefox, chromium]    # Define different browser environments
+
 
     steps:
       - uses: actions/checkout@v4.2.2
 
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: 9
-          run_install: false
 
       - uses: actions/setup-node@v4.1.0
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Get Playwright version
-        id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').dependencies['@playwright/test'].version)")" >> $GITHUB_ENV
-
-      - name: Cache playwright binaries
-        uses: actions/cache@v4.1.2
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
-
       - name: Install deps
-        run: |
-          pnpm install --frozen-lockfile
-
-      - run: pnpm exec playwright install-deps
-      - run: pnpm exec playwright install --with-deps
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
 
       - name: Type Check
         run: pnpm ts
 
-      #   - name: Install Playwright browsers
-      #     run: pnpm exec playwright install --with-deps
-
-      - name: Run e2e tests
-        run: |
-          pnpm build
-          pnpm playwright test --project="mobile"
-
       - name: Run unit tests
         run: pnpm test:ci
 
+      - name: Cache browsers
+        uses: actions/cache/restore@v4.1.2
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Build
+        run: pnpm vite build
+
+      - name: Run e2e tests
+        run: pnpm playwright test --project="${{ matrix.project }}"
+
       - name: Coverage
         uses: davelosert/vitest-coverage-report-action@v2.8.0
-        if: ${{ always() }}
+        if: ${{ success() }}
